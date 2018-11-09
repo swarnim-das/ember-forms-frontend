@@ -1,5 +1,366 @@
-{{!-- The following component displays Ember's default welcome message. --}}
-{{welcome-page}}
-{{!-- Feel free to remove this! --}}
+{{#paper-toolbar}}
+<h3 style="padding-left: 15px">
+    Travel Expenses
+</h3>
+{{/paper-toolbar}}
 
-{{outlet}}
+<script>
+    $(function () {
+
+        $("#id_error_message").hide();
+        $("#email_error_message").hide();
+        $("#name_error_message").hide();
+        $("#edit_btn1").hide();
+        $("#second_details").hide();
+        $("#edit_btn2").hide();
+        $("#total").hide();
+        $("#tot_amt").hide();
+
+        var error_username = false; 
+        var error_email = false;
+        var error_name = false;
+        var error_origin = false;
+        var error_dest = false;
+        var error_amt = false;
+
+        var first_details_filled = false;
+        var second_details_filled = false;
+
+        $("#get_tot_btn").click(function() {
+            let a = Number($("#amt_1").val());
+            let b = Number($("#amt_2").val());
+            
+            let total_amt = a + b;
+            $("#total").show();
+            $("#tot_amt").show();
+            $("#tot_amt").val(total_amt);
+        });
+
+
+        $("#form_email").focusout(function () {
+            check_email();
+        });
+
+        $("#form_id").focusout(function () {
+            check_id();
+        });
+
+        $("#form_name").focusout(function () {
+            check_name();
+        });
+
+        $("#form_origin_1").focusout(function() {
+            check_origin();
+        });
+
+        $("#form_dest_1").focusout(function() {
+            check_dest();
+        })
+
+        $("#amt_1").focusout(function() {
+            check_amt();
+        });
+
+        function check_origin() {
+            var origin_length = $("#form_origin_1").val().length;
+
+            if(origin_length === 0) {
+                $("#origin_error").html("Please enter origin");
+                $("#origin_error").show();
+                $("#form_origin_1").addClass('error');
+                error_origin = true;
+            }
+            else {
+                $("#origin_error").hide();
+                $("#form_origin_1").removeClass('error');
+            }
+        }
+        function check_dest() {
+            var dest_length = $("#form_dest_1").val().length;
+
+            if(dest_length === 0) {
+                $("#destination_error").html("Please enter destination");
+                $("#destination_error").show();
+                $("#form_dest_1").addClass('error');
+                error_dest = true;
+            }
+            else {
+                $("#destination_error").hide();
+                $("#form_dest_1").removeClass('error');
+            }
+        }
+        function check_amt() {
+            var amt_length = $("#amt_1").val().length;
+
+            if(amt_length === 0) {
+                $("#amt_error").html("Please enter amount");
+                $("#amt_error").show();
+                $("#amt_1").addClass('error');
+                error_amt = true;
+            }
+            else{
+                $("#amt_error").hide();
+                $("#amt_1").removeClass('error');
+            }
+        }
+        function check_name() {
+            var name_length = $("#form_name").val().length;
+
+            if (name_length === 0) {
+                $("#name_error_message").html("Cannot be blank");
+                $("#name_error_message").show();
+                $("#form_name").addClass('error');
+                error_name = true;
+            }
+            else {
+                $("#name_error_message").hide();
+                $("#form_name").removeClass('error');
+            }
+        }
+
+        function check_id() {
+
+            var username_length = $("#form_id").val().length;
+
+            if (username_length !== 6) {
+                $("#id_error_message").html("Should be of 6 characters");
+                $("#id_error_message").show();
+                $("#form_id").addClass('error');
+                error_username = true;
+            } else {
+                $("#id_error_message").hide();
+                $("#form_id").removeClass('error');
+            }
+
+        }
+
+        function check_email() {
+
+            var pattern = new RegExp(/^[+a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i);
+
+            if (pattern.test($("#form_email").val())) {
+                $("#email_error_message").hide();
+                $("#form_email").removeClass('error');
+            } else {
+                $("#email_error_message").html("Invalid email address");
+                $("#email_error_message").show();
+                $("#form_email").addClass('error');
+                error_email = true;
+            }
+
+        }
+
+        $("#submit_btn").click(function () {
+            error_username = false;
+            error_name = false;
+            error_email = false;
+
+            check_id();
+            check_name();
+            check_email();
+
+            if (error_username == false && error_name == false && error_email == false) {
+                $.ajax({
+                    url: "http://localhost:8000/post",
+                    type: "POST",
+                    data: {
+                        "id":$('#form_id').val(),
+                        "name":$('#form_name').val(),
+                        "email":$('#form_email').val()
+                    },
+                    success: function(data){
+                        if(data === "HO GYA"){
+                            $("#second_details").show();
+                            $("#form_id").prop("readonly", true);
+                            $("#form_name").prop("readonly", true);
+                            $("#form_email").prop("readonly", true);
+                            $("#form_id").addClass('non-editable');
+                            $("#form_name").addClass('non-editable');
+                            $("#form_email").addClass('non-editable');
+                            $("#edit_btn1").show();
+                        }
+                    }
+                });   
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+
+        $("#save_btn").click(function () {
+            error_amt = false;
+            error_origin = false;
+            error_dest = false;
+
+            check_amt();
+            check_dest();
+            check_origin();
+
+            $.ajax({
+                url: "http://localhost:8000/put",
+                type: "PUT",
+                data: {
+                    "id": $('#form_id').val(),
+                    "date": $('#form_date_1').val(),
+                    "origin": $('#form_origin_1').val(),
+                    "destination": $('#form_dest_1').val(),
+                    "mode": $('#form_mode').val(),
+                    "amt": $('#amt_1').val()
+                }
+            })
+
+            if (error_origin == false && error_dest == false && error_amt == false) {
+                $("#form_origin_1").prop("readonly", true);
+                $("#form_dest_1").prop("readonly", true);
+                $("#amt_1").prop("readonly", true);
+                $("#form_date_1").prop("readonly", true);
+                $("#form_date_1").addClass('non-editable');
+                $("#form_origin_1").addClass('non-editable');
+                $("#form_mode").prop("readonly", true);
+                $("#form_mode").addClass('non-editable');
+                $("#form_dest_1").addClass('non-editable');
+                $("#amt_1").addClass('non-editable');
+                $("#edit_btn2").show();
+                
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+
+
+        $("#edit_btn1").click(function() {
+
+            $("#form_id").prop("readonly", false);
+            $("#form_name").prop("readonly", false);
+            $("#form_email").prop("readonly", false);
+            $("#form_id").removeClass('non-editable');
+            $("#form_name").removeClass('non-editable');
+            $("#form_email").removeClass('non-editable');
+        
+        });
+
+        $("#edit_btn2").click(function() {
+            $("#form_origin_1").prop("readonly", false);
+                $("#form_dest_1").prop("readonly", false);
+                $("#amt_1").prop("readonly", false);
+                $("#form_date_1").prop("readonly", false);
+                $("#form_date_1").removeClass('non-editable');
+                $("#form_origin_1").removeClass('non-editable');
+                $("#form_mode").prop("readonly", false);
+                $("#form_mode").removeClass('non-editable');
+                $("#form_dest_1").removeClass('non-editable');
+                $("#amt_1").removeClass('non-editable');
+        });
+
+        
+        
+
+        var now = new Date();
+
+        var day = ("0" + now.getDate()).slice(-2);
+        var month = ("0" + (now.getMonth() + 1)).slice(-2);
+
+        var today = now.getFullYear()+"-"+(month)+"-"+(day) ;
+
+        $('#form_date_1').val(today);
+            
+            
+    });
+</script>
+
+<div class="workarea">
+
+    <h1>Create a Travel Expense Report</h1>
+
+    <table id="first_details">
+        <h3>Employee Details</h3>
+        <tr>
+            <td>Employee ID: </td>
+            <td><input type="number" class="form_text" id="form_id"></td>
+            <td><span class="error_form" id="id_error_message"></span></td>
+        </tr>
+        <tr>
+            <td>Employee Name: </td>
+            <td><input type="text" class="form_text" id="form_name"></td>
+            <td><span class="error_form" id="name_error_message"></span></td>
+        </tr>
+        <tr>
+            <td>Email: </td>
+            <td><input type="text" class="form_text" id="form_email"></td>
+            <td><span class="error_form" id="email_error_message"></span></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="button" class="sbmt_btn" value="SAVE" id="submit_btn">
+                <input type="button" class="sbmt_btn" value="EDIT" id="edit_btn1"></td>
+        </tr>
+    </table>
+
+    <table id="second_details" class="travel-details">
+        <tr>
+            <td colspan="3">
+                <h3>Travel Details</h3>
+            </td>
+        </tr>
+        <tr>
+            <td>Date</td>
+            <td>Origin</td>
+            <td>Destination</td>
+            <td>Mode of Transport</td>
+            <td>Amount</td>
+        </tr>
+        <tr>
+            <td><input type="date" id="form_date_1"></td>
+            <td><input type="text" id="form_origin_1"></td>
+            <td><input type="text" id="form_dest_1"></td>
+            <td>
+                <select name="mode" id="form_mode">
+                    <option value="flight">Flight</option>
+                    <option value="train">Train</option>
+                    <option value="cab">Cab</option>
+                </select>
+        
+            </td>
+            <td><input type="number" id="amt_1"></td>
+        </tr>
+        {{!-- <tr>
+            <td><input type="date" id="form_date_2" disabled=true></td>
+            <td><input type="text" disabled=true></td>
+            <td><input type="text" disabled=true></td>                        
+            <td>
+                <select name="mode" disabled=true>
+                    <option value="flight">Flight</option>
+                    <option value="train">Train</option>
+                    <option value="cab">Cab</option>
+                </select>
+            </td>
+            <td><input type="number" id="amt_2" disabled=true></td>
+        </tr> --}}
+        <tr>
+            <td></td>
+            <td><span class="error_form" id="origin_error"></span></td>
+            <td><span class="error_form" id="destination_error"></span></td>
+            <td></td>
+            <td><span class="error_form" id="amt_error"></span></td>
+        </tr>
+        <tr> 
+            <td></td>
+            <td>
+                <input type="button" class="sbmt_btn" value="SAVE" id="save_btn">
+                <input type="button" class="sbmt_btn" value="EDIT" id="edit_btn2">
+            </td>
+            <td></td>
+            {{!-- <td style="text-align: end; padding-right: 10px" id="tot_txt">
+                <input type="button" class="sbmt_btn" value="GET TOTAL" id="get_tot_btn">
+                <span id="total">Total:</span> 
+            </td>
+            <td><input type="number" readonly=true class="non-editable" id="tot_amt"></td> --}}
+        </tr>
+    
+    </table>
+
+
+</div><!-- end of workarea -->
